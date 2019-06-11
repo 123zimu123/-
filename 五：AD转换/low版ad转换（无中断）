@@ -1,0 +1,154 @@
+#include <reg51.h>
+#include <intrins.h>
+sfr ADC_CONTR   =   0xBC;           //定义ad转化电源，周期，标志，开启，转换口，数据储存位置
+sfr ADC_RES     =   0xBD;           //高八位数据位置
+sfr ADC_RESL    =   0xBE;           //低八位数据位置
+sfr P1ASF       =   0x9D;           //ad转换总开关位置，设置选中P1的哪个位作为转换的口
+
+#define ADC_FLAG    0x10            //ADC 转换完成的标志
+
+
+unsigned int a,vo;
+unsigned char date5,date0,date1,date2,date3,date4;
+void adc();
+void xianshi();
+void ledd(date0);
+void leddd(date);
+void delay(unsigned int z);
+main()
+{
+  while(1)
+  {	 
+   adc();
+   date2  =  vo/100;
+   date3  =  (vo/10)%10;
+   date4  =  vo%10;
+   xianshi();
+  }	 
+} 
+
+
+void adc()
+{
+  P1ASF      =	 0x01;			                     //  P1.0输入
+// 1110 1000	adc电源控制位打开电源_1		speed1_speed0设置为90个时钟周期转换一次_11		adc_flag若为1表示转换完成_0		adc_start为1表示开始转换   000选择P1^0
+  ADC_CONTR  =	 0xe8;			                    
+  _nop_();
+  _nop_();
+  _nop_();
+  _nop_();											 //因为是两套时钟，需经过延时后才能正确读到ADC_CONTR寄存器的值
+  while(!(ADC_CONTR & ADC_FLAG));					  //转化完成
+  ADC_CONTR  = ADC_CONTR & (~ADC_FLAG);				 //	 关闭ADC
+  vo  =	((float)ADC_RES*5)/256*100;
+}
+   
+ 
+//显示函数
+void xianshi()
+{
+    P2=0xfe;					//从左往右第一个数码管
+	P0=0xff;
+	delay(10);
+
+	P2=0xfd;
+    leddd(date2);
+	delay(10);
+
+	P2=0XFB; 
+    ledd(date3);
+	delay(10);
+
+	P2=0XF7;
+    ledd(date4);
+	delay(10);
+}
+
+
+//LED编码函数 （无小数点）
+
+void ledd(data0)
+{
+  switch(data0)
+  {
+   case 0:
+          P0=0XC0;
+		  break;
+   case 1:
+          P0=0Xf9;
+		  break;
+   case 2:
+          P0=0Xa4;
+		  break;
+   case 3:
+          P0=0Xb0;
+		  break;
+   case 4:
+          P0=0X99;
+		  break;
+   case 5:
+          P0=0X92;
+		  break;
+   case 6:
+          P0=0X82;
+		  break;
+   case 7:
+          P0=0Xf8;
+		  break;
+   case 8:
+          P0=0X80;
+		  break;
+   case 9:
+          P0=0X90;
+		  break;
+  }
+
+}
+
+
+ //LED编码函数(带小数点)
+void leddd(data5)
+{
+  switch(data5)
+  {
+   case 0:
+          P0=0X40;
+		  break;
+   case 1:
+          P0=0X79;
+		  break;
+   case 2:
+          P0=0X24;
+		  break;
+   case 3:
+          P0=0X30;
+		  break;
+   case 4:
+          P0=0X19;
+		  break;
+   case 5:
+          P0=0X12;
+		  break;
+   case 6:
+          P0=0X02;
+		  break;
+   case 7:
+          P0=0X78;
+		  break;
+   case 8:
+          P0=0X00;
+		  break;
+   case 9:
+          P0=0X10;
+		  break;
+  }
+
+}	 
+
+
+//延时函数
+ void delay(unsigned int z)
+{
+    unsigned int j;
+    for(z;z>0;z--)
+        for(j=200;j>0;j--);
+}
