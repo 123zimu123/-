@@ -1,0 +1,40 @@
+#include"reg51.h"
+sbit key=P3^2;
+sbit key1=P3^3;
+#define led_out P1
+
+
+unsigned char led=0x00;
+
+
+void delay(int i)
+{
+	while(i--);
+}
+void int0() interrupt 0
+{
+	delay(1000);
+	if(key==0)
+	{
+		led=led+1;
+		led_out=~led;
+	}
+}
+void int2() interrupt 2
+{
+	delay(3500);
+	if(key1==0)
+	{
+		led=led-1;
+		led_out=~led;
+	}
+}
+void main()
+{
+	IT0=1;
+	IT1=1;
+	EX0=1;
+	EX1=1;
+	EA=1;
+	while(1);
+}	
