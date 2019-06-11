@@ -1,0 +1,82 @@
+#include <reg51.h>
+#include <intrins.h>
+#define ADC_FLAG  0x10
+sfr ADC_CONTR   =   0xBC;           //定义ad转化电源，周期，标志，开启，转换口，数据储存位置
+sfr ADC_RES     =   0xBD;           //高八位数据位置
+sfr ADC_RESL    =   0xBE;           //低八位数据位置
+sfr P1ASF       =   0x9D;           //ad转换总开关位置，设置选中P1的哪个位作为转换的口
+sbit key=P3^2;
+typedef unsigned char uchar;
+unsigned int vo,thousands,hundreds,tens,units;
+unsigned char led=0x00;
+uchar code led_segment[12]={0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F,0x0,0x0};
+uchar code led_segment8[]={0x0BF,0x86,0x0DB,0x0CF,0x0E6,0x0ED,0x0FD,0x87,0x0FF,0x0EF};
+void delay(int i)
+{
+	while(i--);
+}
+void adc()		   
+{
+  P1ASF      =	 0x01;			                    
+  ADC_CONTR  =	 0xe8;			                    
+  _nop_();
+  _nop_();
+  _nop_();
+  _nop_();											
+  while(!(ADC_CONTR & ADC_FLAG));					  
+  ADC_CONTR  = 0xe8;									
+  vo  =	((float)ADC_RES*5)/256*1000;
+}
+
+void smgdisplay()
+{
+	int i;
+	for(i=0;i<4;i++)
+	{
+		switch(i)
+		{
+			case(0):P2=0xfe;P0=~led_segment8[thousands];break;
+			case(1):P2=0xfd;P0=~led_segment[hundreds];break;
+			case(2):P2=0xfb;P0=~led_segment[tens];break;
+			case(3):P2=0xf7;P0=~led_segment[units];break;
+		}
+		delay(100);
+		P0=0xff;
+	}
+}
+
+
+
+void int0() interrupt 0
+{
+	int i=0;
+	adc();
+    thousands=vo/1000;
+	hundreds=(vo/100)%10;
+	tens=(vo/10)%10;
+	units=vo%10;
+	delay(1000);
+	if(key==0)
+	{
+		for(i=3000;i>0;i--)
+		{
+			smgdisplay();
+		}
+	}
+}
+
+void main()
+{
+	IT0=1;
+	EX0=1;	
+	IE0=1;
+	EA=1;
+	adc();
+	while(1)
+	{
+    	thousands=vo/1000;
+		hundreds=(vo/100)%10;
+		tens=(vo/10)%10;
+		units=vo%10;
+	}
+}
