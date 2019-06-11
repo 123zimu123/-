@@ -1,0 +1,41 @@
+#include<reg51.h>
+#include<INTRINS.h>
+#define u16 unsigned int
+#define u8 unsigned char
+ 
+ 
+ 
+sbit pwm1=P1^0;
+sbit pwm2=P1^1;
+sbit pwm3=P1^2;
+u8 jsflag;
+u8 s[3]={50,100,200};
+ 
+void init()    
+{   TMOD|=0x01;
+    TH0=(65536-20000)/256;
+    TL0=(65536-20000)%256;
+    EA=1;
+    ET0=1;
+    TR0=1;
+ 
+}
+ 
+void main()
+{
+    init();
+    while(1);
+}
+ 
+ 
+ 
+void timer0() interrupt 1
+{   
+    TH0=(65536-20000)/256;
+    TL0=(65536-20000)%256;
+    if(++jsflag>350)
+		jsflag=0;
+    pwm1=(jsflag>=s[0]?0:1);
+    pwm2=(jsflag>=s[1]?0:1);
+    pwm3=(jsflag>=s[2]?0:1);
+}
